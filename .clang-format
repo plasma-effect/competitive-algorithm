@@ -1,0 +1,10 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+Language: Cpp
+
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Right
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
