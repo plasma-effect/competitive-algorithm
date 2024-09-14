@@ -1,5 +1,4 @@
 set -euo pipefail
-TIMEOUT=${1:-2}
 
 make
-cat sample/in.txt | timeout ${TIMEOUT} ./main.o > sample/out.txt
+time cat sample/in.txt | ./main.o > sample/out.txt 2> debug.txt

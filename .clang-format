@@ -8,3 +8,4 @@ AlignConsecutiveAssignments:
   Enabled: true
   AcrossEmptyLines: false
   AcrossComments: false
+PointerAlignment: Left

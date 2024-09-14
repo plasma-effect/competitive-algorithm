@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Others
+.vscode/
+sample/out*.*
+debug.txt
+boost*/
+boost*.tar.gz
+tmp/
