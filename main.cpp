@@ -3,8 +3,20 @@
 #include <boost/range/irange.hpp>
 
 namespace common {
+// common
 template <typename T> auto max_v = std::numeric_limits<T>::max();
 template <typename T> auto min_v = std::numeric_limits<T>::min();
+template <typename Integer>
+struct integer_range : boost::integer_range<Integer>, std::ranges::view_base {
+  using boost::integer_range<Integer>::integer_range;
+};
+template <typename Integer> integer_range<Integer> irange(Integer last) {
+  return integer_range<Integer>(Integer(0), last);
+}
+template <typename Integer>
+integer_range<Integer> irange(Integer first, Integer last) {
+  return integer_range<Integer>(first, last);
+}
 
 // segtree
 namespace detail {
