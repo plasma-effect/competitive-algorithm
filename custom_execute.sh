@@ -4,4 +4,4 @@ TIMEOUT=${1:-2}
 make
 mkdir -p tmp
 python3 make_case.py > tmp/in.txt
-time cat tmp/in.txt | ./main.o > sample/out.txt 2> debug.txt
+./execute.sh tmp/in.txt sample/out.txt sample/debug.txt

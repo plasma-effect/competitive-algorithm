@@ -17,6 +17,15 @@ template <typename Integer>
 integer_range<Integer> irange(Integer first, Integer last) {
   return integer_range<Integer>(first, last);
 }
+template <typename T>
+std::size_t upper_bound_index(std::vector<T> const& vec, T const& v) {
+  return std::ranges::upper_bound(vec, v) - vec.begin();
+}
+template <typename T>
+std::size_t lower_bound_index(std::vector<T> const& vec, T const& v) {
+  return std::ranges::lower_bound(vec, v) - vec.begin();
+}
+template <typename T> using pair = std::pair<T, T>;
 
 // segtree
 namespace detail {
@@ -38,6 +47,8 @@ using mul_segtree = atcoder::segtree<T, detail::multiplies, detail::get_one<T>>;
 } // namespace common
 namespace debug {
 namespace detail {
+template <typename T> void print(std::vector<T> const& vec);
+template <typename T0, typename T1> void print(std::pair<T0, T1> const& p);
 template <typename T> auto print(T&& val) -> decltype(std::cerr << val) {
   return std::cerr << val;
 }
@@ -54,15 +65,23 @@ template <typename T> void print(std::vector<T> const& vec) {
     std::cerr << "]";
   }
 }
+template <typename T0, typename T1> void print(std::pair<T0, T1> const& p) {
+  std::cerr << "(";
+  print(p.first);
+  std::cerr << ", ";
+  print(p.second);
+  std::cerr << ")";
+}
 } // namespace detail
-template <typename T> void println(T&& val) {
-  detail::print(std::forward<T>(val));
+template <typename T> void println(T const& val) {
+  detail::print(val);
   std::cerr << std::endl;
 }
-template <typename T, typename... Ts> void println(T&& val, Ts&&... vals) {
-  detail::print(std::forward<T>(val));
+template <typename T, typename... Ts>
+void println(T const& val, Ts const&... vals) {
+  detail::print(val);
   std::cerr << " ";
-  println(std::forward<Ts>(vals)...);
+  println(vals...);
 }
 } // namespace debug
 

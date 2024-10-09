@@ -14,7 +14,7 @@ fi
 
 if [ ! -e "boost" ]; then
   mkdir -p boost
-  cd "boost_${BOOST_MINOR}_${BOOST_PATCH}"
-  bootstrap.sh
-  b2 install -j4 --prefix=$PWD/../boost
+  cd "boost_1_${BOOST_MINOR}_${BOOST_PATCH}"
+  ./bootstrap.sh
+  ./b2 install -j4 --prefix=$PWD/../boost
 fi
