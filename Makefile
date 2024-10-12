@@ -1,10 +1,12 @@
-SRC = main.cpp
-OBJ = $(SRC:.cpp=.o)
+.PHONY: all
+all: main.o
+
 CXXFLAGS = -std=c++20 -O3 -Iboost/include -Iac-library
 
-$(OBJ): $(SRC)
+%.o: %.cpp
 	g++ $^ $(CXXFLAGS) -o $@
 
 .PHONY: clean
 clean:
-	rm *.o
+	rm -f *.o
+	./clean_sequence_cases.sh
