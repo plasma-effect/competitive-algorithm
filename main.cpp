@@ -1,5 +1,6 @@
 #include "bits/stdc++.h"
 #include <atcoder/all>
+#include <boost/multi_array.hpp>
 #include <boost/range/irange.hpp>
 
 namespace common {
@@ -43,6 +44,34 @@ template <typename T>
 using add_segtree = atcoder::segtree<T, detail::plus, detail::get_zero<T>>;
 template <typename T>
 using mul_segtree = atcoder::segtree<T, detail::multiplies, detail::get_one<T>>;
+
+// Floyd-Warshall Algorithm
+namespace detail {
+template <typename T>
+void local_update(std::optional<T>& base, std::optional<T> a,
+                  std::optional<T> b) {
+  if (a && b) {
+    if (!base) {
+      base = *a + *b;
+    } else {
+      base = std::min(*base, *a + *b);
+    }
+  }
+}
+template <typename T> void local_update(T& base, T a, T b) {
+  base = std::min(base, a + b);
+}
+} // namespace detail
+template <typename T>
+void warshall_floyd(boost::multi_array<T, 2>& data, std::size_t N) {
+  for (auto k : boost::irange(N)) {
+    for (auto i : boost::irange(N)) {
+      for (auto j : boost::irange(N)) {
+        detail::local_update(data[i][j], data[i][k], data[k][j]);
+      }
+    }
+  }
+}
 
 } // namespace common
 namespace debug {
