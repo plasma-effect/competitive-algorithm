@@ -73,6 +73,10 @@ void warshall_floyd(boost::multi_array<T, 2>& data, std::size_t N) {
   }
 }
 
+// for dijkstra
+template <typename T>
+using p_queue = std::priority_queue<T, std::vector<T>, std::greater<>>;
+
 } // namespace common
 namespace debug {
 namespace detail {

@@ -5,3 +5,6 @@ for i in `seq $1`; do
   ./execute.sh samples/in${i}.txt sample/out.txt sample/debug.txt
   diff sample/out.txt samples/out${i}.txt
 done
+
+echo ""
+echo "sequence execute succeeded"
