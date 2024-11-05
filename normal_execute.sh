@@ -1,3 +1,6 @@
 set -euo pipefail
 
-./execute.sh sample/in.txt sample/out.txt sample/debug.txt
+make
+time cat sample/in.txt | ./main.o \
+  > sample/out.txt \
+  2> sample/debug.txt

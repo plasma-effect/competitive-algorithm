@@ -2,6 +2,7 @@ set -euo pipefail
 TIMEOUT=${1:-2}
 
 make
-mkdir -p tmp
-python3 make_case.py > tmp/in.txt
-./execute.sh tmp/in.txt sample/out.txt sample/debug.txt
+python3 make_case.py > sample/in.txt
+cat sample/in.txt | ./main.o \
+  > sample/out.txt \
+  2> sample/debug.txt
