@@ -2,6 +2,13 @@
 #include <atcoder/all>
 #include <boost/multi_array.hpp>
 #include <boost/range/irange.hpp>
+#ifdef LOCAL_DEBUG
+#include "debug/print.hpp"
+#else
+namespace debug {
+void println(...) {}
+} // namespace debug
+#endif
 
 namespace common {
 // common
@@ -78,47 +85,18 @@ template <typename T>
 using p_queue = std::priority_queue<T, std::vector<T>, std::greater<>>;
 
 } // namespace common
-namespace debug {
-namespace detail {
-template <typename T> void print(std::vector<T> const& vec);
-template <typename T0, typename T1> void print(std::pair<T0, T1> const& p);
-template <typename T> auto print(T&& val) -> decltype(std::cerr << val) {
-  return std::cerr << val;
-}
-template <typename T> void print(std::vector<T> const& vec) {
-  if (vec.size() == 0) {
-    std::cerr << "[]";
-  } else {
-    std::cerr << "[";
-    print(vec[0]);
-    for (auto i : boost::irange<std::size_t>(1, vec.size())) {
-      std::cerr << ", ";
-      print(vec[i]);
-    }
-    std::cerr << "]";
-  }
-}
-template <typename T0, typename T1> void print(std::pair<T0, T1> const& p) {
-  std::cerr << "(";
-  print(p.first);
-  std::cerr << ", ";
-  print(p.second);
-  std::cerr << ")";
-}
-} // namespace detail
-template <typename T> void println(T const& val) {
-  detail::print(val);
-  std::cerr << std::endl;
-}
-template <typename T, typename... Ts>
-void println(T const& val, Ts const&... vals) {
-  detail::print(val);
-  std::cerr << " ";
-  println(vals...);
-}
-} // namespace debug
 
-void Main() {}
+void Main() {
+  int a, b;
+  std::cin >> a >> b;
+  std::cout << a + b << std::endl;
+  debug::println(a, b, a + b);
+  debug::println(std::make_pair(a, b));
+  debug::println(std::make_tuple(a, b, a + b));
+  debug::println(std::vector{a, b, a + b});
+  debug::println(std::vector{std::make_tuple(a, b), std::make_tuple(b, b + a),
+                             std::make_tuple(a + b, a)});
+}
 
 int main() {
   std::cin.tie(nullptr);

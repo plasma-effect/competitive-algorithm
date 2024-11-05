@@ -1,10 +1,12 @@
 .PHONY: all
 all: main.o
 
-CXXFLAGS = -std=c++20 -O3 -Iboost/include -Iac-library
+CXXFLAGS = -std=c++20 -O3 -Iboost/include -Iac-library -DLOCAL_DEBUG
 
 %.o: %.cpp
-	g++ $^ $(CXXFLAGS) -o $@
+	g++ -MMD -MP $< $(CXXFLAGS) -o $@
+
+-include main.d
 
 .PHONY: clean_sequence_cases
 clean_sequence_cases:
@@ -21,5 +23,5 @@ clean_sequence_cases:
 
 .PHONY: clean
 clean:
-	rm -f *.o
+	rm -f *.o *.d
 	$(MAKE) clean_sequence_cases
