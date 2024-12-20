@@ -118,12 +118,7 @@ using min_update_lazy_segtree =
 
 } // namespace common
 
-void Main() {
-  int a, b;
-  std::string s;
-  std::cin >> a >> b >> s;
-  std::cout << a + b << " " << s << std::endl;
-}
+void Main() {}
 
 int main() {
   std::cin.tie(nullptr);
