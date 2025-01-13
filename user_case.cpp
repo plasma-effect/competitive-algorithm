@@ -49,10 +49,7 @@ void println(T const& val, Ts const&... vals) {
 }
 } // namespace common
 
-void Main() {
-  common::println(1, 2);
-  common::println("test");
-}
+void Main() {}
 
 int main() {
   std::cin.tie(nullptr);

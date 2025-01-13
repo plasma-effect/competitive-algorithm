@@ -10,10 +10,44 @@ template <typename... Ts> void println(Ts const&...) {}
 } // namespace debug
 #endif
 
-namespace common {
-// common
+namespace numeric {
 template <typename T> constexpr auto max_v = std::numeric_limits<T>::max();
 template <typename T> constexpr auto min_v = std::numeric_limits<T>::min();
+namespace detail {
+template <typename T> struct get_val_t {
+  T val;
+  constexpr get_val_t(T v) : val(v) {}
+  constexpr auto operator()() const { return val; }
+};
+} // namespace detail
+namespace detail {
+template <auto id, typename F> struct monoid_t {
+  using value_t = decltype(id);
+  F op_;
+  constexpr monoid_t(F op) : op_(op) {}
+  constexpr auto operator()() const { return id; }
+  constexpr auto operator()(const value_t& lhs, const value_t& rhs) const {
+    return op_(lhs, rhs);
+  }
+};
+constexpr auto min_f = [](const auto& lhs, const auto& rhs) {
+  return std::min(lhs, rhs);
+};
+constexpr auto max_f = [](const auto& lhs, const auto& rhs) {
+  return std::max(lhs, rhs);
+};
+} // namespace detail
+template <typename T> constexpr detail::monoid_t<T(0), std::plus<>> plus{{}};
+template <typename T>
+constexpr detail::monoid_t<T(1), std::multiplies<>> multiplies{{}};
+template <typename T>
+constexpr detail::monoid_t<max_v<T>, decltype(detail::min_f)> min{{}};
+template <typename T>
+constexpr detail::monoid_t<min_v<T>, decltype(detail::max_f)> max{{}};
+} // namespace numeric
+
+namespace common {
+// common
 template <typename Integer>
 struct integer_range : boost::integer_range<Integer>, std::ranges::view_base {
   using boost::integer_range<Integer>::integer_range;
@@ -49,34 +83,17 @@ std::ostream& print_range(const T& ar, const char* delim = " ") {
 
 // segtree
 namespace detail {
-constexpr std::plus<> plus;
-constexpr std::multiplies<> multiplies;
-template <typename T> struct get_val_t {
-  T val;
-  constexpr get_val_t(T v) : val(v) {}
-  constexpr auto operator()() const { return val; }
-};
-struct max_f_t {
-  template <typename T>
-  constexpr auto operator()(T const& lhs, T const& rhs) const {
-    return std::max(lhs, rhs);
-  }
-};
-constexpr max_f_t max;
-constexpr auto min = [](auto const& lhs, auto const& rhs) {
-  return std::min(lhs, rhs);
-};
-template <typename T> constexpr get_val_t<T> get_zero{0};
-template <typename T> constexpr get_val_t<T> get_one{1};
-template <typename T> constexpr get_val_t<T> get_max{max_v<T>};
-template <typename T> constexpr get_val_t<T> get_min{min_v<T>};
+template <auto monoid> using value_t = typename decltype(monoid)::value_t;
 } // namespace detail
-template <typename T>
-using add_segtree = atcoder::segtree<T, detail::plus, detail::get_zero<T>>;
-template <typename T>
-using mul_segtree = atcoder::segtree<T, detail::multiplies, detail::get_one<T>>;
-template <typename T>
-using max_segtree = atcoder::segtree<T, detail::max, detail::get_min<T>>;
+template <auto monoid>
+using segtree = atcoder::segtree<detail::value_t<monoid>, monoid, monoid>;
+template <typename T> using add_segtree = segtree<numeric::plus<T>>;
+template <typename T> using mul_segtree = segtree<numeric::multiplies<T>>;
+template <typename T> using max_segtree = segtree<numeric::max<T>>;
+
+template <auto m0, auto m1>
+using lazy_segtree = atcoder::lazy_segtree<detail::value_t<m0>, m0, m0,
+                                           detail::value_t<m1>, m1, m1, m1>;
 
 // Floyd-Warshall Algorithm
 namespace detail {
@@ -107,14 +124,8 @@ void warshall_floyd(boost::multi_array<T, 2>& data, std::size_t N) {
 }
 
 // for dijkstra
-template <typename T>
-using p_queue = std::priority_queue<T, std::vector<T>, std::greater<>>;
-
-// lazy segtree
-template <typename T, auto op, auto e>
-using min_update_lazy_segtree =
-    atcoder::lazy_segtree<T, op, e, T, detail::min, detail::min,
-                          detail::get_max<T>>;
+template <typename T, typename F = std::greater<>>
+using p_queue = std::priority_queue<T, std::vector<T>, F>;
 
 } // namespace common
 
