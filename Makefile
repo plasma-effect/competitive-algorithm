@@ -1,7 +1,9 @@
 .PHONY: default
 default: main.o
 
-CXXFLAGS = -std=c++20 -O3 -Iboost/include -Iac-library -DLOCAL_DEBUG -Wall -Wextra -Werror=return-type
+WARNINGS = -Wall -Wextra -Werror=return-type
+INCLUDES = -Iboost/include -Iac-library
+CXXFLAGS = -std=c++20 -O3  -DLOCAL_DEBUG $(INCLUDES) $(WARNINGS)
 
 %.o: %.cpp
 	g++ -MMD -MP $< $(CXXFLAGS) -o $@
@@ -22,6 +24,9 @@ clean_sequence_cases:
 	cp /dev/null samples/out5.txt
 
 .PHONY: clean
-clean:
+clean: clean_sequence_cases
 	rm -f *.o *.d
-	$(MAKE) clean_sequence_cases
+
+.PHONY: reset
+reset: clean
+	bazel run @competitive_library//expander -- $(PWD)/main.tmp.cpp -o $(PWD)/main.cpp

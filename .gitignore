@@ -39,6 +39,7 @@ ac-library-*.tar.gz
 
 # Others
 .vscode/
+bazel*
 sample/out*.*
 debug.txt
 tmp/
