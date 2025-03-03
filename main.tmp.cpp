@@ -2,12 +2,13 @@
 #include <atcoder/all>
 #include <bits/stdc++.h>
 #ifdef LOCAL_DEBUG
-#include "debug/print.hpp"
+#include "debug_print.hpp"
 #else
 namespace debug {
 template <typename... Ts> void println(Ts const&...) {}
 } // namespace debug
 #endif
+#include "normal_print.hpp"
 #include "numeric.hpp"
 #include "segtree.hpp"
 #include "utility.hpp"
@@ -20,4 +21,5 @@ int main() {
   std::cin.sync_with_stdio(false);
   std::cout << std::fixed << std::setprecision(15);
   Main();
+  std::cout << std::flush;
 }

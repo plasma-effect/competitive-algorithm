@@ -2,7 +2,7 @@
 default: main.o
 
 WARNINGS = -Wall -Wextra -Werror=return-type
-INCLUDES = -Iboost/include -Iac-library
+INCLUDES = -Iboost/include -Iac-library -Icompetitive-library/include
 CXXFLAGS = -std=c++20 -O3  -DLOCAL_DEBUG $(INCLUDES) $(WARNINGS)
 
 %.o: %.cpp
