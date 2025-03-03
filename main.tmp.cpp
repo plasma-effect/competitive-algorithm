@@ -1,4 +1,9 @@
 #include "boost/range/irange.hpp"
+#include "normal_print.hpp"
+#include "numeric.hpp"
+#include "segtree.hpp"
+#include "utility.hpp"
+#include "warshall_floyd.hpp"
 #include <atcoder/all>
 #include <bits/stdc++.h>
 #ifdef LOCAL_DEBUG
@@ -8,11 +13,6 @@ namespace debug {
 template <typename... Ts> void println(Ts const&...) {}
 } // namespace debug
 #endif
-#include "normal_print.hpp"
-#include "numeric.hpp"
-#include "segtree.hpp"
-#include "utility.hpp"
-#include "warshall_floyd.hpp"
 
 void Main() {}
 

@@ -1,4 +1,4 @@
-#include "debug/print.hpp"
+#include "debug_print.hpp"
 #include "normal_print.hpp"
 #include <atcoder/all>
 #include <bits/stdc++.h>
