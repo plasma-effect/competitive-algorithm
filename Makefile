@@ -8,6 +8,9 @@ CXXFLAGS = -std=c++20 -O3  -DLOCAL_DEBUG $(INCLUDES) $(WARNINGS)
 %.o: %.cpp
 	g++ -MMD -MP $< $(CXXFLAGS) -o $@
 
+%.hpp.gch: %.hpp
+	g++ -x c++-header $< $(CXXFLAGS) -o $@
+
 -include main.d
 
 .PHONY: clean_sequence_cases
@@ -28,5 +31,5 @@ clean: clean_sequence_cases
 	rm -f *.o *.d
 
 .PHONY: reset
-reset: clean
+reset: clean local_headers.hpp.gch
 	bazel run @competitive_library//expander -- $(PWD)/main.tmp.cpp -o $(PWD)/main.cpp

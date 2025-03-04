@@ -1,11 +1,14 @@
+#ifdef LOCAL_DEBUG
+#include "local_headers.hpp"
+#else
+#include "atcoder/all"
+#include "bits/stdc++.h"
 #include "boost/range/irange.hpp"
+#endif
 #include "normal_print.hpp"
 #include "numeric.hpp"
 #include "segtree.hpp"
-#include "utility.hpp"
 #include "warshall_floyd.hpp"
-#include <atcoder/all>
-#include <bits/stdc++.h>
 #ifdef LOCAL_DEBUG
 #include "debug_print.hpp"
 #else

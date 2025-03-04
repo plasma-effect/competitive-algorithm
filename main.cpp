@@ -1,6 +1,10 @@
+#ifdef LOCAL_DEBUG
+#include "local_headers.hpp"
+#else
 #include "atcoder/all"
+#include "bits/stdc++.h"
 #include "boost/range/irange.hpp"
-#include <bits/stdc++.h>
+#endif
 
 namespace common {
 template <typename T> constexpr auto max_v = std::numeric_limits<T>::max();
@@ -271,14 +275,7 @@ template <typename... Ts> void println(Ts const&...) {}
 } // namespace debug
 #endif
 
-void Main() {
-  int a, b;
-  std::string s;
-  std::cin >> a >> b;
-  std::cin >> s;
-  common::println(a + b, s);
-  debug::println(a + b, s);
-}
+void Main() {}
 
 int main() {
   std::cin.tie(nullptr);
