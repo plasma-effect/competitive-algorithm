@@ -10,16 +10,12 @@ namespace common {
 template <typename T> constexpr auto max_v = std::numeric_limits<T>::max();
 template <typename T> constexpr auto min_v = std::numeric_limits<T>::min();
 
-template <typename Integer>
-struct integer_range : boost::integer_range<Integer>, std::ranges::view_base {
-  using boost::integer_range<Integer>::integer_range;
-};
-template <typename Integer> integer_range<Integer> irange(Integer last) {
-  return integer_range<Integer>(Integer(0), last);
+template <std::integral Int> auto irange(Int first, Int last) {
+  assert(std::cmp_less_equal(first, last));
+  return std::views::iota(first, last);
 }
-template <typename Integer>
-integer_range<Integer> irange(Integer first, Integer last) {
-  return integer_range<Integer>(first, last);
+template <std::integral Int> auto irange(Int last) {
+  return irange(Int(0), last);
 }
 
 template <typename T> using pair = std::pair<T, T>;
@@ -31,24 +27,16 @@ template <typename T> class dual_array {
 public:
   dual_array(std::size_t d0, std::size_t d1)
       : inside_(d0 * d1), dim0(d0), dim1(d1) {}
-  T& operator()(int i0, int i1) {
-    assert(0 <= i0 && std::cmp_less(i0, dim0));
-    assert(0 <= i1 && std::cmp_less(i1, dim1));
+  template <std::integral Int0, std::integral Int1>
+  T& operator()(Int0 i0, Int1 i1) {
+    assert(std::cmp_greater_equal(i0, 0) && std::cmp_less(i0, dim0));
+    assert(std::cmp_greater_equal(i1, 0) && std::cmp_less(i1, dim1));
     return inside_[i0 * dim1 + i1];
   }
-  T const& operator()(int i0, int i1) const {
-    assert(0 <= i0 && std::cmp_less(i0, dim0));
-    assert(0 <= i1 && std::cmp_less(i1, dim1));
-    return inside_[i0 * dim1 + i1];
-  }
-  T& operator()(std::size_t i0, std::size_t i1) {
-    assert(std::cmp_less(i0, dim0));
-    assert(std::cmp_less(i1, dim1));
-    return inside_[i0 * dim1 + i1];
-  }
-  T const& operator()(std::size_t i0, std::size_t i1) const {
-    assert(std::cmp_less(i0, dim0));
-    assert(std::cmp_less(i1, dim1));
+  template <std::integral Int0, std::integral Int1>
+  T const& operator()(Int0 i0, Int1 i1) const {
+    assert(std::cmp_greater_equal(i0, 0) && std::cmp_less(i0, dim0));
+    assert(std::cmp_greater_equal(i1, 0) && std::cmp_less(i1, dim1));
     return inside_[i0 * dim1 + i1];
   }
   common::pair<std::size_t> dimensions() const { return {dim0, dim1}; }
@@ -64,13 +52,7 @@ template <typename T, typename F = std::greater<>>
 using priority_queue = std::priority_queue<T, std::vector<T>, F>;
 } // namespace common
 
-namespace atcoder {
-template <int mod>
-std::ostream& operator<<(std::ostream& ost, static_modint<mod> const& val) {
-  return ost << val.val();
-}
-} // namespace atcoder
-namespace print_detail {
+namespace common::internal {
 template <typename T>
 concept stdstream_able = requires(T a) { std::declval<std::ostream&>() << a; };
 
@@ -89,30 +71,46 @@ public:
       : base_flags(os.flags()), ost(os), rng_dec{}, tpl_dec{} {}
   ~print_base_t() { ost.setf(base_flags); }
 
-  void print(std::string const& str) { ost << str; }
-  void print(std::string_view const& view) { ost << view; }
-  void print(const char* str) { ost << str; }
-  template <stdstream_able T> void print(T const& v) { ost << v; }
-  template <std::input_iterator It> void print(It first, It last) {
+  print_base_t& operator<<(std::string const& str) {
+    ost << str;
+    return *this;
+  }
+  print_base_t& operator<<(std::string_view const& view) {
+    ost << view;
+    return *this;
+  }
+  print_base_t& operator<<(const char* str) {
+    ost << str;
+    return *this;
+  }
+  template <int mod>
+  print_base_t& operator<<(atcoder::static_modint<mod> const& val) {
+    ost << val.val();
+    return *this;
+  }
+  template <stdstream_able T> print_base_t& operator<<(T const& v) {
+    ost << v;
+    return *this;
+  }
+  template <std::input_iterator It> void print_ite(It first, It last) {
     ost << rng_dec.prefix;
     if (first != last) {
-      print(*first);
+      *this << *first;
       for (++first; first != last; ++first) {
         ost << rng_dec.delim;
-        print(*first);
+        *this << *first;
       }
     }
     ost << rng_dec.suffix;
   }
-  template <std::integral Int>
-  void print(common::integer_range<Int> const& rng) {
-    print(rng.begin(), rng.end());
+  template <std::ranges::input_range T> print_base_t& operator<<(T const& rng) {
+    print_ite(rng.begin(), rng.end());
+    return *this;
   }
-  template <std::ranges::input_range T> void print(T const& rng) {
-    print(rng.begin(), rng.end());
-  }
-  template <typename T, std::size_t N> void print(T const (&ar)[N]) {
-    print(std::ranges::begin(ar), std::ranges::end(ar));
+  template <typename T, std::size_t N>
+  print_base_t& operator<<(T const (&ar)[N]) {
+    print_ite(std::ranges::begin(ar), std::ranges::end(ar));
+    return *this;
   }
   template <std::size_t S, std::size_t I, typename T>
   void tuple_print(T const& t) {
@@ -121,18 +119,30 @@ public:
     } else {
       ost << tpl_dec.delim;
     }
-    print(std::get<I>(t));
+    *this << std::get<I>(t);
     if constexpr (I + 1 != S) {
       tuple_print<S, I + 1>(t);
     } else {
       ost << tpl_dec.suffix;
     }
   }
-  template <typename T0, typename T1> void print(std::pair<T0, T1> const& p) {
+  template <typename T0, typename T1>
+  print_base_t& operator<<(std::pair<T0, T1> const& p) {
     tuple_print<2, 0>(p);
+    return *this;
   }
-  template <typename... Ts> void print(std::tuple<Ts...> const& t) {
+  template <typename... Ts>
+  print_base_t& operator<<(std::tuple<Ts...> const& t) {
     tuple_print<sizeof...(Ts), 0>(t);
+    return *this;
+  }
+  template <typename T> print_base_t& operator<<(std::optional<T> const& opt) {
+    if (opt) {
+      *this << *opt;
+    } else {
+      ost << "<nullopt>";
+    }
+    return *this;
   }
   void set_range_prefix(const char* new_prefix) { rng_dec.prefix = new_prefix; }
   void set_range_suffix(const char* new_suffix) { rng_dec.suffix = new_suffix; }
@@ -141,10 +151,7 @@ public:
   void set_tuple_suffix(const char* new_suffix) { tpl_dec.suffix = new_suffix; }
   void set_tuple_delim(const char* new_delim) { tpl_dec.delim = new_delim; }
 };
-} // namespace print_detail
 
-namespace common {
-namespace detail {
 template <typename T>
 constexpr bool is_std_manip_v =
     std::is_same_v<T, decltype(std::setbase(std::declval<int>()))> ||
@@ -152,20 +159,24 @@ constexpr bool is_std_manip_v =
     std::is_same_v<T, decltype(std::setprecision(std::declval<int>()))> ||
     std::is_same_v<T, decltype(std::setw(std::declval<int>()))> ||
     std::is_convertible_v<T, std::ios_base& (*)(std::ios_base&)>;
-template <bool> void print(print_detail::print_base_t&) {}
+} // namespace common::internal
+
+namespace common::internal {
+template <bool> void print(print_base_t&) {}
 template <bool put_blank, typename T, typename... Ts>
-void print(print_detail::print_base_t& pb, T const& arg, Ts const&... args) {
+void print(print_base_t& pb, T const& arg, Ts const&... args) {
   if constexpr (put_blank) {
-    pb.print(" ");
+    pb << " ";
   }
-  pb.print(arg);
-  print<!is_std_manip_v<std::remove_cv_t<T>>>(pb, args...);
+  pb << arg;
+  common::internal::print<!is_std_manip_v<std::remove_cv_t<T>>>(pb, args...);
 }
-} // namespace detail
+} // namespace common::internal
+namespace common {
 inline void println() { std::cout << "\n"; }
 template <typename... Ts> void println(Ts const&... args) {
-  print_detail::print_base_t pb(std::cout);
-  detail::print<false>(pb, args...);
+  common::internal::print_base_t pb(std::cout);
+  common::internal::print<false>(pb, args...);
   std::cout << "\n";
 }
 } // namespace common
@@ -190,24 +201,25 @@ template <typename T>
 constexpr monoid_t max{common::min_v<T>,
                        static_cast<T const& (*)(T const&, T const&)>(std::max)};
 } // namespace numeric
+namespace numeric::internal {
+template <auto monoid> using value_t = typename decltype(monoid)::value_t;
+}
 
 namespace common {
-namespace detail {
-template <auto monoid> using value_t = typename decltype(monoid)::value_t;
-} // namespace detail
 template <auto monoid>
-using segtree = atcoder::segtree<detail::value_t<monoid>, monoid, monoid>;
+using segtree =
+    atcoder::segtree<numeric::internal::value_t<monoid>, monoid, monoid>;
 template <typename T> using add_segtree = segtree<numeric::plus<T>>;
 template <typename T> using mul_segtree = segtree<numeric::multiplies<T>>;
 template <typename T> using max_segtree = segtree<numeric::max<T>>;
 
 template <auto m0, auto m1>
-using lazy_segtree = atcoder::lazy_segtree<detail::value_t<m0>, m0, m0,
-                                           detail::value_t<m1>, m1, m1, m1>;
+using lazy_segtree =
+    atcoder::lazy_segtree<numeric::internal::value_t<m0>, m0, m0,
+                          numeric::internal::value_t<m1>, m1, m1, m1>;
 } // namespace common
 
-namespace graph {
-namespace detail {
+namespace graph::internal {
 template <typename T>
 void local_update(std::optional<T>& base, std::optional<T> a,
                   std::optional<T> b) {
@@ -222,14 +234,15 @@ void local_update(std::optional<T>& base, std::optional<T> a,
 template <typename T> void local_update(T& base, T a, T b) {
   base = std::min(base, a + b);
 }
-} // namespace detail
+} // namespace graph::internal
+namespace graph {
 template <typename T> void warshall_floyd(common::dual_array<T>& data) {
   auto [N, d1] = data.dimensions();
   assert(N == d1);
-  for (auto k : boost::irange(N)) {
-    for (auto i : boost::irange(N)) {
-      for (auto j : boost::irange(N)) {
-        detail::local_update(data(i, j), data(i, k), data(k, j));
+  for (auto k : common::irange(N)) {
+    for (auto i : common::irange(N)) {
+      for (auto j : common::irange(N)) {
+        internal::local_update(data(i, j), data(i, k), data(k, j));
       }
     }
   }
@@ -237,35 +250,30 @@ template <typename T> void warshall_floyd(common::dual_array<T>& data) {
 } // namespace graph
 #ifdef LOCAL_DEBUG
 
-namespace debug {
-namespace detail {
-template <typename T>
-constexpr bool is_std_manip_v =
-    std::is_same_v<T, decltype(std::setbase(std::declval<int>()))> ||
-    std::is_same_v<T, decltype(std::setfill(std::declval<char>()))> ||
-    std::is_same_v<T, decltype(std::setprecision(std::declval<int>()))> ||
-    std::is_same_v<T, decltype(std::setw(std::declval<int>()))> ||
-    std::is_convertible_v<T, std::ios_base& (*)(std::ios_base&)>;
-template <bool> void print(print_detail::print_base_t&) {}
+namespace debug::internal {
+template <bool> void print(common::internal::print_base_t&) {}
 template <bool put_blank, typename T, typename... Ts>
-void print(print_detail::print_base_t& pb, T const& arg, Ts const&... args) {
+void print(common::internal::print_base_t& pb, T const& arg,
+           Ts const&... args) {
   if constexpr (put_blank) {
-    pb.print(" ");
+    pb << " ";
   }
-  pb.print(arg);
-  print<!is_std_manip_v<std::remove_cv_t<T>>>(pb, args...);
+  pb << arg;
+  debug::internal::print<
+      !common::internal::is_std_manip_v<std::remove_cv_t<T>>>(pb, args...);
 }
-} // namespace detail
+} // namespace debug::internal
+namespace debug {
 inline void println() { std::cerr << std::endl; }
 template <typename... Ts> void println(Ts const&... args) {
-  print_detail::print_base_t pb(std::cerr);
+  common::internal::print_base_t pb(std::cerr);
   pb.set_range_prefix("{");
   pb.set_range_suffix("}");
   pb.set_range_delim(", ");
   pb.set_tuple_prefix("(");
   pb.set_tuple_suffix(")");
   pb.set_tuple_delim(", ");
-  detail::print<false>(pb, args...);
+  debug::internal::print<false>(pb, args...);
   std::cerr << std::endl;
 }
 } // namespace debug
