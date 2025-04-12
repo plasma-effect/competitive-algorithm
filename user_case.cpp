@@ -5,8 +5,9 @@
 #include <boost/range/irange.hpp>
 
 void Main() {
-  common::println(1, 2);
-  common::println("myonmyon");
+  int N = 200'000, K = 10;
+  common::println(N, K);
+  common::println(common::irange(N));
 }
 
 int main() {

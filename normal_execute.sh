@@ -1,6 +1,6 @@
 set -euo pipefail
 
 make
-time cat sample/in.txt | ./main.o \
+time timeout 3s ./main.o < sample/in.txt \
   > sample/out.txt \
   2> sample/debug.txt

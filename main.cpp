@@ -3,13 +3,12 @@
 #else
 #include "atcoder/all"
 #include "bits/stdc++.h"
+#include "boost/multiprecision/cpp_int.hpp"
 #include "boost/range/irange.hpp"
 #endif
-
 namespace common {
 template <typename T> constexpr auto max_v = std::numeric_limits<T>::max();
 template <typename T> constexpr auto min_v = std::numeric_limits<T>::min();
-
 template <std::integral Int> auto irange(Int first, Int last) {
   assert(std::cmp_less_equal(first, last));
   return std::views::iota(first, last);
@@ -17,9 +16,7 @@ template <std::integral Int> auto irange(Int first, Int last) {
 template <std::integral Int> auto irange(Int last) {
   return irange(Int(0), last);
 }
-
 template <typename T> using pair = std::pair<T, T>;
-
 template <typename T> class dual_array {
   std::vector<T> inside_;
   std::size_t dim0, dim1;
@@ -42,20 +39,84 @@ public:
   common::pair<std::size_t> dimensions() const { return {dim0, dim1}; }
   std::size_t size() const { return dim0 * dim1; }
 };
-
 template <> class dual_array<bool> : public dual_array<std::uint8_t> {
 public:
   using dual_array<std::uint8_t>::dual_array;
 };
-
 template <typename T, typename F = std::greater<>>
 using priority_queue = std::priority_queue<T, std::vector<T>, F>;
 } // namespace common
-
+namespace graph::internal {
+template <std::integral Int> struct topological_sort_impl {
+  enum class flag { none, temporary, done };
+  std::vector<std::set<Int>> const& edge;
+  std::vector<Int> result;
+  std::vector<flag> flags;
+  bool visit(Int i) {
+    if (flags[i] == flag::temporary) {
+      return false;
+    } else if (flags[i] == flag::none) {
+      flags[i] = flag::temporary;
+      for (auto n : edge[i]) {
+        if (!visit(n)) {
+          return false;
+        }
+      }
+      flags[i] = flag::done;
+      result.emplace_back(i);
+    }
+    return true;
+  }
+};
+} // namespace graph::internal
+namespace graph {
+template <std::integral Int>
+std::optional<std::vector<Int>>
+topological_sort(std::vector<std::set<Int>> const& edge) {
+  const auto N = edge.size();
+  internal::topological_sort_impl<Int> impl{edge, {}, {}};
+  impl.flags.resize(N);
+  for (auto i : common::irange(N)) {
+    if (!impl.visit(static_cast<Int>(i))) {
+      return std::nullopt;
+    }
+  }
+  std::ranges::reverse(impl.result);
+  return impl.result;
+}
+} // namespace graph
+namespace graph::internal {
+template <typename T>
+void local_update(std::optional<T>& base, std::optional<T> a,
+                  std::optional<T> b) {
+  if (a && b) {
+    if (!base) {
+      base = *a + *b;
+    } else {
+      base = std::min(*base, *a + *b);
+    }
+  }
+}
+template <typename T> void local_update(T& base, T a, T b) {
+  base = std::min(base, a + b);
+}
+} // namespace graph::internal
+namespace graph {
+template <typename T> void warshall_floyd(common::dual_array<T>& data) {
+  auto [N, d1] = data.dimensions();
+  assert(N == d1);
+  for (auto k : common::irange(N)) {
+    for (auto i : common::irange(N)) {
+      for (auto j : common::irange(N)) {
+        internal::local_update(data(i, j), data(i, k), data(k, j));
+      }
+    }
+  }
+}
+} // namespace graph
 namespace common::internal {
 template <typename T>
 concept stdstream_able = requires(T a) { std::declval<std::ostream&>() << a; };
-
 class print_base_t {
   std::ios_base::fmtflags base_flags;
   std::ostream& ost;
@@ -70,7 +131,6 @@ public:
   print_base_t(std::ostream& os)
       : base_flags(os.flags()), ost(os), rng_dec{}, tpl_dec{} {}
   ~print_base_t() { ost.setf(base_flags); }
-
   print_base_t& operator<<(std::string const& str) {
     ost << str;
     return *this;
@@ -151,7 +211,6 @@ public:
   void set_tuple_suffix(const char* new_suffix) { tpl_dec.suffix = new_suffix; }
   void set_tuple_delim(const char* new_delim) { tpl_dec.delim = new_delim; }
 };
-
 template <typename T>
 constexpr bool is_std_manip_v =
     std::is_same_v<T, decltype(std::setbase(std::declval<int>()))> ||
@@ -160,7 +219,6 @@ constexpr bool is_std_manip_v =
     std::is_same_v<T, decltype(std::setw(std::declval<int>()))> ||
     std::is_convertible_v<T, std::ios_base& (*)(std::ios_base&)>;
 } // namespace common::internal
-
 namespace common::internal {
 template <bool> void print(print_base_t&) {}
 template <bool put_blank, typename T, typename... Ts>
@@ -180,7 +238,6 @@ template <typename... Ts> void println(Ts const&... args) {
   std::cout << "\n";
 }
 } // namespace common
-
 namespace numeric {
 template <typename T, typename F> struct monoid_t {
   using value_t = T;
@@ -204,7 +261,6 @@ constexpr monoid_t max{common::min_v<T>,
 namespace numeric::internal {
 template <auto monoid> using value_t = typename decltype(monoid)::value_t;
 }
-
 namespace common {
 template <auto monoid>
 using segtree =
@@ -212,44 +268,12 @@ using segtree =
 template <typename T> using add_segtree = segtree<numeric::plus<T>>;
 template <typename T> using mul_segtree = segtree<numeric::multiplies<T>>;
 template <typename T> using max_segtree = segtree<numeric::max<T>>;
-
 template <auto m0, auto m1>
 using lazy_segtree =
     atcoder::lazy_segtree<numeric::internal::value_t<m0>, m0, m0,
                           numeric::internal::value_t<m1>, m1, m1, m1>;
 } // namespace common
-
-namespace graph::internal {
-template <typename T>
-void local_update(std::optional<T>& base, std::optional<T> a,
-                  std::optional<T> b) {
-  if (a && b) {
-    if (!base) {
-      base = *a + *b;
-    } else {
-      base = std::min(*base, *a + *b);
-    }
-  }
-}
-template <typename T> void local_update(T& base, T a, T b) {
-  base = std::min(base, a + b);
-}
-} // namespace graph::internal
-namespace graph {
-template <typename T> void warshall_floyd(common::dual_array<T>& data) {
-  auto [N, d1] = data.dimensions();
-  assert(N == d1);
-  for (auto k : common::irange(N)) {
-    for (auto i : common::irange(N)) {
-      for (auto j : common::irange(N)) {
-        internal::local_update(data(i, j), data(i, k), data(k, j));
-      }
-    }
-  }
-}
-} // namespace graph
 #ifdef LOCAL_DEBUG
-
 namespace debug::internal {
 template <bool> void print(common::internal::print_base_t&) {}
 template <bool put_blank, typename T, typename... Ts>
@@ -282,6 +306,7 @@ namespace debug {
 template <typename... Ts> void println(Ts const&...) {}
 } // namespace debug
 #endif
+#define IGNORE [[maybe_unused]] auto _
 
 void Main() {}
 
